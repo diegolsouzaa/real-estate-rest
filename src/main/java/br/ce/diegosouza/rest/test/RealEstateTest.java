@@ -157,4 +157,27 @@ public class RealEstateTest extends BaseTest {
                 .statusCode(500)
                 .body("constraint", is("transacoes_conta_id_foreign"));
     }
+
+    @Test
+    public void shouldCalculateBalanceAccount(){
+        given()
+                .header("Authorization", "JWT " + token)
+                .when()
+                .get("/saldo")
+                .then().log().all()
+                .statusCode(200)
+                .body("find{it.conta_id == 331859}.saldo", is("150.00"));
+    }
+
+    //323630
+    @Test
+    public void shouldRemoveMovement(){
+
+        given()
+                .header("Authorization", "JWT " + token)
+                .when()
+                .delete("/transacoes/323630")
+                .then().log().all()
+                .statusCode(204);
+    }
 }
