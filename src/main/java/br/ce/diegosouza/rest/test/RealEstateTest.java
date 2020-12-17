@@ -1,8 +1,6 @@
 package br.ce.diegosouza.rest.test;
 
 import br.ce.diegosouza.rest.core.BaseTest;
-import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -32,6 +30,23 @@ public class RealEstateTest extends BaseTest {
                         .statusCode(200)
                         .extract().path("token");
     }
+
+    private Movimentation getMovimetationValid(){
+        Movimentation movimentation = new Movimentation();
+        movimentation.setConta_id(331859);
+        //movimentation.setUsuario_id(88);
+        movimentation.setDescricao("descricao da movimentacao");
+        movimentation.setEnvolvido("Envolvido na movimentacao");
+        movimentation.setTipo("REC");
+        movimentation.setData_transacao("01/01/2000");
+        movimentation.setData_pagamento("10/05/2010");
+        movimentation.setValor(150f);
+        movimentation.setStatus(true);
+
+        return movimentation;
+
+    }
+
 
     @Test
     public void shouldDoNotAcessApiWithoutToken(){
@@ -78,5 +93,68 @@ public class RealEstateTest extends BaseTest {
                 .then()
                 .statusCode(400).body("error", is("Já existe uma conta com esse nome!"))
         ;
+    }
+
+    @Test
+    public void shouldIncludeMovimentation(){
+        Movimentation mov = getMovimetationValid();
+
+        given()
+                .header("Authorization", "JWT " + token)
+                .body(mov)
+                .when()
+                .post("/transacoes")
+                .then().log().all()
+                .statusCode(201);
+    }
+
+    @Test
+    public void shouldValidateRequiredFieldsInMovimentation(){
+        given()
+                .header("Authorization", "JWT " + token)
+                .body("{}")
+                .when()
+                .post("/transacoes")
+                .then()
+                .statusCode(400).body("$", hasSize(8))
+                .body("msg", hasItems(
+                        "Data da Movimentação é obrigatório",
+                        "Data do pagamento é obrigatório",
+                        "Descrição é obrigatório",
+                        "Interessado é obrigatório",
+                        "Valor é obrigatório",
+                        "Valor deve ser um número",
+                        "Conta é obrigatório",
+                        "Situação é obrigatório"
+                ));
+
+    }
+
+    @Test
+    public void shouldDoNotIncludeMovimentationWithFutureDate(){
+
+        Movimentation mov = getMovimetationValid();
+        mov.setData_transacao("25/12/2020");
+
+        given()
+                .header("Authorization", "JWT " + token)
+                .body(mov)
+                .when()
+                .post("/transacoes")
+                .then().log().all()
+                .statusCode(400)
+                .body("$", hasSize(1))
+                .body("msg", hasItem("Data da Movimentação deve ser menor ou igual à data atual"));
+    }
+
+    @Test
+    public void shouldDoNotRemoveMovimentation(){
+        given()
+                .header("Authorization", "JWT " + token)
+                .when()
+                .delete("/contas/331859")
+                .then().log().all()
+                .statusCode(500)
+                .body("constraint", is("transacoes_conta_id_foreign"));
     }
 }
