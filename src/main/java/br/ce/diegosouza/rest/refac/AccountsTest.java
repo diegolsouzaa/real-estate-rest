@@ -1,37 +1,13 @@
 package br.ce.diegosouza.rest.refac;
 
+import br.ce.diegosouza.rest.Utils.RealStateUtils;
 import br.ce.diegosouza.rest.core.BaseTest;
-import io.restassured.RestAssured;
-import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.is;
 
 public class AccountsTest extends BaseTest {
-
-    @BeforeClass
-    public static void login(){
-        Map<String, String> login = new HashMap<String, String>();
-        login.put("email", "diego@lauriano");
-        login.put("senha", "1234");
-
-        String token =
-                given()
-                        .body(login)
-                        .when()
-                        .post("/signin")
-                        .then()
-                        .statusCode(200)
-                        .extract().path("token");
-
-        RestAssured.requestSpecification.header("Authorization", "JWT " + token);
-
-        RestAssured.get("/reset").then().statusCode(200);
-    }
 
     @Test
     public void shouldIncludeAccount(){
@@ -45,7 +21,7 @@ public class AccountsTest extends BaseTest {
 
     @Test
     public void shouldChangeAccount(){
-        Integer ACCOUNT_ID = getIdAccountByName("Conta para alterar");
+        Integer ACCOUNT_ID = RealStateUtils.getIdAccountByName("Conta para alterar");
         given()
                 .body("{\"nome\": \"Conta alterada\"}")
                 .pathParam("id", ACCOUNT_ID)
@@ -66,8 +42,6 @@ public class AccountsTest extends BaseTest {
                 .statusCode(400).body("error", is("Já existe uma conta com esse nome!"));
     }
 
-    public Integer getIdAccountByName(String name){
-       return RestAssured.get("/contas?nome="+name).then().extract().path("id[0]");
-    }
+
 
 }

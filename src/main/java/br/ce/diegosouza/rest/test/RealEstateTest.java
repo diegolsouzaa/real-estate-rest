@@ -143,7 +143,7 @@ public class RealEstateTest extends BaseTest {
     }
 
     @Test
-    public void t08_shouldDoNotRemoveMovimentation(){
+    public void t08_shouldDoNotRemoveAccountWithMovimentation(){
         given()
                 .pathParam("id", ACCOUNT_ID)
                 .when()
